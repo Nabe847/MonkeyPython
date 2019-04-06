@@ -9,6 +9,15 @@ INT = "INT"
 # 演算子
 ASSIGN = "="
 PLUS = "+"
+MINUS = "-"
+BANG = "!"
+ASTERISK = "*"
+SLASH = "/"
+
+LT = "<"
+GT = ">"
+EQ = "=="
+NOT_EQ = "!="
 
 # デリミタ
 COMMA = ","
@@ -22,6 +31,25 @@ RBRACE = "}"
 # キーワード
 FUNCTION = "FUNCTION"
 LET = "LET"
+TRUE = "TRUE"
+FALSE = "FALSE"
+IF = "IF"
+ELSE = "ELSE"
+RETURN = "RETURN"
+
+keywords = {
+    "fn": FUNCTION,
+    "let": LET,
+    "true": TRUE,
+    "false": FALSE,
+    "if": IF,
+    "else": ELSE,
+    "return": RETURN,
+}
+
+
+def lookup_ident(ident):
+    return keywords.get(ident, IDENT)
 
 
 class Token:
@@ -30,4 +58,4 @@ class Token:
         self.literal = literal
 
     def __str__(self):
-        return f'token_type: {self.token_type}, literal: {self.literal}'
+        return f'[token_type: {self.token_type: <10}][literal: {self.literal: <10}]'
