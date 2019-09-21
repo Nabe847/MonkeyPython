@@ -1,4 +1,4 @@
-import monkey_token
+import pmonkey.token as monkey_token
 
 
 class Lexer:

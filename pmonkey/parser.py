@@ -1,4 +1,4 @@
-from ast import ast
+import ast
 
 
 class Parser:

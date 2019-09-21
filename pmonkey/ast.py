@@ -1,9 +1,9 @@
 
 class Node:
     def __init__(self, token):
-        self.token
+        self.token = token
 
-    def token_literal():
+    def token_literal(self):
         return self.token.literal
 
 
