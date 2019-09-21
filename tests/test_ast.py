@@ -4,6 +4,7 @@ from pmonkey.parser import Parser
 from pmonkey import ast
 
 
+# python -m unittest tests.test_ast
 class TestParser(unittest.TestCase):
     def test_let_statements(self):
         input = """
@@ -20,13 +21,13 @@ class TestParser(unittest.TestCase):
         tests = ["x", "y", "foobar"]
 
         for test, statement in zip(tests, program.statements):
-            self.assert_valid_let_statement(statement, test)
+            self.assert_valid_let_statement(test, statement)
 
     def assert_valid_let_statement(self, name, statement):
-        self.assertEqual("let", statement.token_literal)
+        self.assertEqual("let", statement.token_literal())
         self.assertEqual(ast.LetStatement, type(statement))
         self.assertEqual(name, statement.name.value)
-        self.assertEqual(name, statement.name.token_literal)
+        self.assertEqual(name, statement.name.token_literal())
 
 
 if __name__ == '__main__':

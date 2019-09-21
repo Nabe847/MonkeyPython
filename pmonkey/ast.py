@@ -24,33 +24,25 @@ class Expression(Node):
 
 
 class Program(Node):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self):
+        super().__init__("")
         self.statements = []
 
     def token_literal(self):
         if len(self.statements) > 0:
             return self.statements[0].token_literal()
         else:
-            return ''
+            return ""
 
 
 class Identifier(Expression):
     def __init__(self, token):
         super().__init__(token)
-        self.token = None
-        self.value = None
-
-    def __str__(self):
-        return str(self.token)
+        self.value = token.literal
 
 
 class LetStatement(Statement):
     def __init__(self, token):
         super().__init__(token)
-        self.token = None
         self.name = None
         self.value = None
-
-    def token_literal(self):
-        return str(self.token)
