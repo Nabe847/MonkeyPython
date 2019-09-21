@@ -11,16 +11,10 @@ class Statement(Node):
     def __init__(self, token):
         super().__init__(token)
 
-    def statement_node(self):
-        pass
-
 
 class Expression(Node):
     def __init__(self, token):
         super().__init__(token)
-
-    def expression_node(self):
-        pass
 
 
 class Program(Node):
@@ -34,11 +28,37 @@ class Program(Node):
         else:
             return ""
 
+    def __str__(self):
+        return "\n".join(self.statements)
+
 
 class Identifier(Expression):
     def __init__(self, token):
         super().__init__(token)
         self.value = token.literal
+
+    def __str__(self):
+        return self.value
+
+
+class IntegerLiteral(Expression):
+    def __init__(self, token):
+        super().__init__(token)
+        self.value = None
+
+    def __str__(self):
+        self.token_literal()
+
+
+class PrefixExpression(Expression):
+    def __init__(self, token):
+        super().__init__(token)
+        self.operator = self.token_literal()
+        self.right = None
+
+    def __str__(self):
+        s = f"({self.operator}{str(self.right)})"
+        return s
 
 
 class LetStatement(Statement):
@@ -46,3 +66,35 @@ class LetStatement(Statement):
         super().__init__(token)
         self.name = None
         self.value = None
+
+    def __str__(self):
+        s = f"{self.token_literal()} {str(self.name)} = "
+        if self.value:
+            s += str(self.value)
+        s += ";"
+        return s
+
+
+class ReturnStatement(Statement):
+    def __init__(self, token):
+        super().__init__(token)
+        self.return_value = None
+
+    def __str__(self):
+        s = self.token_literal() + " "
+        if self.return_value:
+            s += str(self.return_value)
+        s += ";"
+        return s
+
+
+class ExpressionStatement(Statement):
+    def __init__(self, token):
+        super().__init__(token)
+        self.expression = None
+
+    def __str__(self):
+        if self.expression:
+            return str(self.expression)
+        else:
+            return ""
