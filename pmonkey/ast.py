@@ -29,7 +29,7 @@ class Program(Node):
             return ""
 
     def __str__(self):
-        return "\n".join([str(s) for s in self.statements])
+        return "".join([str(s) for s in self.statements])
 
 
 class Identifier(Expression):

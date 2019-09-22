@@ -75,8 +75,8 @@ class TestParser(unittest.TestCase):
 
     def test_parsing_prefix_expressions(self):
         prefix_tests = [
-            {"input":"!5;", "operator":"!", "integer_value":5},
-            {"input":"-15", "operator":"-", "integer_value":15},
+            {"input": "!5;", "operator": "!", "integer_value": 5},
+            {"input": "-15", "operator": "-", "integer_value": 15},
         ]
 
         print()
@@ -88,7 +88,7 @@ class TestParser(unittest.TestCase):
 
             self.assertEqual(1, len(program.statements))
             statement = program.statements[0]
-            
+
             print(str(program))
 
             self.assertEqual(ast.ExpressionStatement, type(statement))
@@ -108,7 +108,7 @@ class TestParser(unittest.TestCase):
             ["5>5;", 5, ">", 5],
             ["5<5;", 5, "<", 5],
             ["5==5;", 5, "==", 5],
-            ["5!=5;", 5, "!=", 5],    
+            ["5!=5;", 5, "!=", 5],
         ]
 
         print()
@@ -130,7 +130,69 @@ class TestParser(unittest.TestCase):
             self.assert_integer_literal(test[1], expression.left)
             self.assertEqual(test[2], expression.operator)
             self.assert_integer_literal(test[3], expression.right)
-        
+
+    def test_operator_precedence_parsing(self):
+        tests = [
+            [
+                "-a * b",
+                "((-a)*b)"
+            ],
+            [
+                "!-a",
+                "(!(-a))"
+            ],
+            [
+                "a + b + c",
+                "((a+b)+c)"
+            ],
+            [
+                "a + b - c",
+                "((a+b)-c)"
+            ],
+            [
+                "a * b * c",
+                "((a*b)*c)"
+            ],
+            [
+                "a * b / c",
+                "((a*b)/c)"
+            ],
+            [
+                "a + b / c",
+                "(a+(b/c))"
+            ],
+            [
+                "a + b * c + d / e - f",
+                "(((a+(b*c))+(d/e))-f)"
+            ],
+            [
+                "3 + 4; -5 * 5",
+                "(3+4)((-5)*5)"
+            ],
+            [
+                "5 > 4 == 3 < 4",
+                "((5>4)==(3<4))"
+            ],
+            [
+                "5 < 4 != 3 > 4",
+                "((5<4)!=(3>4))"
+            ],
+            [
+                "3 + 4 * 5 == 3 * 1 + 4 * 5",
+                "((3+(4*5))==((3*1)+(4*5)))"
+            ],
+        ]
+
+        for test in tests:
+            l = Lexer(test[0])
+            p = Parser(l)
+            program = p.parse_program()
+            self.check_parser_errors(p)
+
+            s = str(program)
+            print(s)
+            self.assertEqual(test[1], s)
+
     def assert_integer_literal(self, expected, expression):
         self.assertEqual(ast.IntegerLiteral, type(expression))
         self.assertEqual(expected, expression.value)
