@@ -29,7 +29,7 @@ class Program(Node):
             return ""
 
     def __str__(self):
-        return "\n".join(self.statements)
+        return "\n".join([str(s) for s in self.statements])
 
 
 class Identifier(Expression):
@@ -47,7 +47,7 @@ class IntegerLiteral(Expression):
         self.value = None
 
     def __str__(self):
-        self.token_literal()
+        return str(self.token_literal())
 
 
 class PrefixExpression(Expression):
@@ -57,7 +57,22 @@ class PrefixExpression(Expression):
         self.right = None
 
     def __str__(self):
-        s = f"({self.operator}{str(self.right)})"
+        return f"({str(self.operator)}{self.right})"
+
+
+class InfixExpression(Expression):
+    def __init__(self, token):
+        super().__init__(token)
+        self.left = None
+        self.operator = None
+        self.right = None
+
+    def __str__(self):
+        s = "("
+        s += str(self.left)
+        s += self.operator
+        s += str(self.right)
+        s += ")"
         return s
 
 

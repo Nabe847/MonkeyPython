@@ -79,6 +79,7 @@ class TestParser(unittest.TestCase):
             {"input":"-15", "operator":"-", "integer_value":15},
         ]
 
+        print()
         for test in prefix_tests:
             l = Lexer(test["input"])
             p = Parser(l)
@@ -87,6 +88,9 @@ class TestParser(unittest.TestCase):
 
             self.assertEqual(1, len(program.statements))
             statement = program.statements[0]
+            
+            print(str(program))
+
             self.assertEqual(ast.ExpressionStatement, type(statement))
 
             expression = statement.expression
@@ -94,6 +98,38 @@ class TestParser(unittest.TestCase):
             self.assertEqual(test["operator"], expression.operator)
             self.assert_integer_literal(
                 test["integer_value"], expression.right)
+
+    def test_parsing_infix_expressions(self):
+        infix_tests = [
+            ["5+5;", 5, "+", 5],
+            ["5-5;", 5, "-", 5],
+            ["5*5;", 5, "*", 5],
+            ["5/5;", 5, "/", 5],
+            ["5>5;", 5, ">", 5],
+            ["5<5;", 5, "<", 5],
+            ["5==5;", 5, "==", 5],
+            ["5!=5;", 5, "!=", 5],    
+        ]
+
+        print()
+        for test in infix_tests:
+            l = Lexer(test[0])
+            p = Parser(l)
+            program = p.parse_program()
+            self.check_parser_errors(p)
+
+            self.assertEqual(1, len(program.statements))
+            statement = program.statements[0]
+
+            print(str(program))
+
+            self.assertEqual(ast.ExpressionStatement, type(statement))
+
+            expression = statement.expression
+            self.assertEqual(ast.InfixExpression, type(expression))
+            self.assert_integer_literal(test[1], expression.left)
+            self.assertEqual(test[2], expression.operator)
+            self.assert_integer_literal(test[3], expression.right)
         
     def assert_integer_literal(self, expected, expression):
         self.assertEqual(ast.IntegerLiteral, type(expression))

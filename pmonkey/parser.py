@@ -9,6 +9,16 @@ PRODUCT = 5
 PREFIX = 6
 CALL = 7
 
+PRECEDENCES = {
+    token.EQ: EQUALS,
+    token.NOT_EQ: EQUALS,
+    token.LT: LESSGREATER,
+    token.GT: LESSGREATER,
+    token.PLUS: SUM,
+    token.MINUS: SUM,
+    token.SLASH: PRODUCT,
+    token.ASTERISK: PRODUCT,
+}
 
 class Parser:
     def __init__(self, l):
@@ -21,12 +31,21 @@ class Parser:
         self.errors = []
 
         self.prefix_parser_fns = {}
-        self.inifix_parser_fns = {}
+        self.infix_parser_fns = {}
 
         self.prefix_parser_fns[token.IDENT] = self.parse_identifier
         self.prefix_parser_fns[token.INT] = self.parse_integerliteral
         self.prefix_parser_fns[token.BANG] = self.parse_prefix_expression
         self.prefix_parser_fns[token.MINUS] = self.parse_prefix_expression
+
+        self.infix_parser_fns[token.PLUS] = self.parse_infix_expression
+        self.infix_parser_fns[token.MINUS] = self.parse_infix_expression
+        self.infix_parser_fns[token.SLASH] = self.parse_infix_expression
+        self.infix_parser_fns[token.ASTERISK] = self.parse_infix_expression
+        self.infix_parser_fns[token.EQ] = self.parse_infix_expression
+        self.infix_parser_fns[token.NOT_EQ] = self.parse_infix_expression
+        self.infix_parser_fns[token.LT] = self.parse_infix_expression
+        self.infix_parser_fns[token.GT] = self.parse_infix_expression
 
     def next_token(self):
         self.cur_token = self.peek_token
@@ -79,11 +98,12 @@ class Parser:
 
         self.next_token()
 
+        # TODO: 読み飛ばしている
         while not self.cur_token_is(token.SEMICOLON):
             self.next_token()
 
         return ret
-
+   
     def parse_expression_statement(self):
         statement = ast.ExpressionStatement(self.cur_token)
         statement.expression = self.parse_expression(LOWEST)
@@ -100,6 +120,14 @@ class Parser:
 
         prefix = self.prefix_parser_fns[self.cur_token.token_type]
         left_exp = prefix()
+
+        while self.peek_token.token_type != token.SEMICOLON and precedence < self.peek_precedence():
+            if self.peek_token.token_type not in self.infix_parser_fns:
+                return left_exp
+
+            infix = self.infix_parser_fns[self.peek_token.token_type]
+            self.next_token()
+            left_exp = infix(left_exp)
 
         return left_exp
 
@@ -123,6 +151,16 @@ class Parser:
         self.next_token()
         expression.right = self.parse_expression(PREFIX)
         return expression
+    
+    def parse_infix_expression(self, left):
+        precedence = self.cur_precedence()
+        expression = ast.InfixExpression(self.cur_token)
+        expression.left = left
+        expression.operator = self.cur_token.literal
+        self.next_token()
+        expression.right = self.parse_expression(precedence)
+
+        return expression
 
     def expect_peek(self, expected_type):
         if self.peek_token.token_type == expected_type:
@@ -131,6 +169,18 @@ class Parser:
         else:
             self.peek_error(expected_type)
             return False
+
+    def peek_precedence(self):
+        if self.peek_token.token_type not in PRECEDENCES:
+            return LOWEST
+        
+        return PRECEDENCES[self.peek_token.token_type]
+
+    def cur_precedence(self):
+        if self.cur_token.token_type not in PRECEDENCES:
+            return LOWEST
+        
+        return PRECEDENCES[self.cur_token.token_type]
 
     def peek_error(self, expected_type):
         msg = f"expected next token to be {expected_type}, got {self.cur_token.token_type} insted"
