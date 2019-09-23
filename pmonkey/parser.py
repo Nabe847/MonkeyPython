@@ -198,6 +198,14 @@ class Parser:
         
         expression.consequence = self.parse_block_statement()
 
+        if self.peek_token.token_type == token.ELSE:
+            self.next_token()
+
+            if not self.expect_peek(token.LBRACE):
+                return None
+
+            expression.alternative = self.parse_block_statement()
+
         return expression
 
     def parse_block_statement(self):

@@ -79,7 +79,7 @@ class TestParser(unittest.TestCase):
             l = Lexer(test[0])
             p = Parser(l)
             program = p.parse_program()
-            
+
             self.assertEqual(1, len(program.statements))
             s = str(program)
             # print(s)
@@ -87,10 +87,14 @@ class TestParser(unittest.TestCase):
 
     def test_parsing_prefix_expressions(self):
         prefix_tests = [
-            {"input": "!5;", "operator": "!", "value": 5, "type": ast.IntegerLiteral},
-            {"input": "-15", "operator": "-", "value": 15, "type": ast.IntegerLiteral},
-            {"input": "!true", "operator": "!", "value": True, "type": ast.BooleanLiteral},
-            {"input": "!false", "operator": "!", "value": False, "type": ast.BooleanLiteral},
+            {"input": "!5;", "operator": "!",
+                "value": 5, "type": ast.IntegerLiteral},
+            {"input": "-15", "operator": "-",
+                "value": 15, "type": ast.IntegerLiteral},
+            {"input": "!true", "operator": "!",
+                "value": True, "type": ast.BooleanLiteral},
+            {"input": "!false", "operator": "!",
+                "value": False, "type": ast.BooleanLiteral},
         ]
 
         # print()
@@ -262,6 +266,27 @@ class TestParser(unittest.TestCase):
         self.assertEqual(ast.Identifier, type(csq_exp))
         self.assertEqual("x", csq_exp.value)
 
+    def test_if_else_expression(self):
+        input = "if (x > y) { x } else { y }"
+        l = Lexer(input)
+        p = Parser(l)
+        program = p.parse_program()
+        self.check_parser_errors(p)
+
+        self.assertEqual(1, len(program.statements))
+        statement = program.statements[0]
+        self.assertEqual(ast.ExpressionStatement, type(statement))
+
+        if_exp = statement.expression
+        self.assertEqual(ast.IfExpression, type(if_exp))
+
+        alt_statement = if_exp.alternative
+        self.assertEqual(ast.BlockStatement, type(alt_statement))
+        self.assertEqual(1, len(alt_statement.statements))
+
+        alt_exp = alt_statement.statements[0].expression
+        self.assertEqual(ast.Identifier, type(alt_exp))
+        self.assertEqual("y", alt_exp.value)
 
     def assert_valid_let_statement(self, name, statement):
         self.assertEqual("let", statement.token_literal())
