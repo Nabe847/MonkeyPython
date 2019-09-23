@@ -7,41 +7,41 @@ from pmonkey import ast
 # python -m unittest tests.test_ast
 class TestParser(unittest.TestCase):
     def test_let_statements(self):
-        input = """
-        let x = 5;
-        let y = 10;
-        let foobar = 838383;
-        """
-        l = Lexer(input)
-        parser = Parser(l)
-        program = parser.parse_program()
-        self.check_parser_errors(parser)
+        tests = [
+            {"input": "let x = 5;", "exp_identifier": "x", "exp_value": 5},
+            {"input": "let y = true;", "exp_identifier": "y", "exp_value": True},
+            {"input": "let foobar = y;", "exp_identifier": "foobar", "exp_value": "y"}
+        ]
 
-        self.assertIsNotNone(program)
-        self.assertEqual(3, len(program.statements))
+        for test in tests:
+            l = Lexer(test["input"])
+            parser = Parser(l)
+            program = parser.parse_program()
+            self.check_parser_errors(parser)
 
-        tests = ["x", "y", "foobar"]
-
-        for test, statement in zip(tests, program.statements):
-            self.assert_valid_let_statement(test, statement)
+            self.assertEqual(1, len(program.statements))
+            statement = program.statements[0]
+            self.assert_let_statement(test["exp_identifier"], statement)
+            self.assertEqual(test["exp_value"], statement.value.value)
 
     def test_return_statement(self):
-        input = """
-        return 5;
-        return 10;
-        return 9993332;
-        """
+        tests = [
+            {"input": "return 5;",  "exp_value": 5},
+            {"input": "return true;", "exp_value": True},
+            {"input": "return y;", "exp_value": "y"},
+        ]
 
-        l = Lexer(input)
-        parser = Parser(l)
-        program = parser.parse_program()
-        self.check_parser_errors(parser)
+        for test in tests:
+            l = Lexer(test["input"])
+            parser = Parser(l)
+            program = parser.parse_program()
+            self.check_parser_errors(parser)
 
-        self.assertEqual(3, len(program.statements))
-
-        for statement in program.statements:
-            self.assertEqual("return", statement.token_literal())
+            self.assertEqual(1, len(program.statements))
+            statement = program.statements[0]
             self.assertEqual(ast.ReturnStatement, type(statement))
+            self.assertEqual("return", statement.token_literal())
+            self.assertEqual(test["exp_value"], statement.return_value.value)
 
     def test_identifier_expression(self):
         input = "foobar;"
@@ -223,7 +223,19 @@ class TestParser(unittest.TestCase):
             [
                 "!(true == false)",
                 "(!(true==false))"
-            ]
+            ],
+            [
+                "a + add(b * c) + d",
+                "((a+add((b*c)))+d)"
+            ],
+            [
+                "add(a, b, 1, 2 * 3, 4 + 5, add(6, 7*8))",
+                "add(a,b,1,(2*3),(4+5),add(6,(7*8)))"
+            ],
+            [
+                "add(a+b+c*d/f+g)",
+                "add((((a+b)+((c*d)/f))+g))"
+            ],
         ]
 
         # print()
@@ -341,7 +353,46 @@ class TestParser(unittest.TestCase):
             for exp, act in zip(test["expected_params"], function.parameters):
                 self.assertEqual(exp, act.value)
 
-    def assert_valid_let_statement(self, name, statement):
+    def test_call_expression_parsing(self):
+        input = "add(1, 2*3, 4+5)"
+
+        l = Lexer(input)
+        p = Parser(l)
+        program = p.parse_program()
+        self.check_parser_errors(p)
+
+        self.assertEqual(1, len(program.statements))
+        statement = program.statements[0]
+
+        self.assertEqual(ast.ExpressionStatement, type(statement))
+        self.assertEqual(ast.CallExpression, type(statement.expression))
+        call_exp = statement.expression
+
+        self.assertEqual(ast.Identifier, type(call_exp.function))
+        self.assertEqual("add", call_exp.function.value)
+
+        self.assertEqual(3, len(call_exp.arguments))
+
+        self.assertEqual(ast.IntegerLiteral, type(call_exp.arguments[0]))
+        self.assertEqual(1, call_exp.arguments[0].value)
+
+        self.assertEqual(ast.InfixExpression, type(call_exp.arguments[1]))
+        infix = call_exp.arguments[1]
+        self.assertEqual(ast.IntegerLiteral, type(infix.left))
+        self.assertEqual(2, infix.left.value)
+        self.assertEqual("*", infix.operator)
+        self.assertEqual(ast.IntegerLiteral, type(infix.right))
+        self.assertEqual(3, infix.right.value)
+
+        self.assertEqual(ast.InfixExpression, type(call_exp.arguments[2]))
+        infix = call_exp.arguments[2]
+        self.assertEqual(ast.IntegerLiteral, type(infix.left))
+        self.assertEqual(4, infix.left.value)
+        self.assertEqual("+", infix.operator)
+        self.assertEqual(ast.IntegerLiteral, type(infix.right))
+        self.assertEqual(5, infix.right.value)
+
+    def assert_let_statement(self, name, statement):
         self.assertEqual("let", statement.token_literal())
         self.assertEqual(ast.LetStatement, type(statement))
         self.assertEqual(name, statement.name.value)

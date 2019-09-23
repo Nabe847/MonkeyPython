@@ -18,6 +18,7 @@ PRECEDENCES = {
     token.MINUS: SUM,
     token.SLASH: PRODUCT,
     token.ASTERISK: PRODUCT,
+    token.LPAREN: CALL,
 }
 
 class Parser:
@@ -51,6 +52,7 @@ class Parser:
         self.infix_parser_fns[token.NOT_EQ] = self.parse_infix_expression
         self.infix_parser_fns[token.LT] = self.parse_infix_expression
         self.infix_parser_fns[token.GT] = self.parse_infix_expression
+        self.infix_parser_fns[token.LPAREN] = self.parse_call_expression
 
     def next_token(self):
         self.cur_token = self.peek_token
@@ -92,8 +94,10 @@ class Parser:
         if not self.expect_peek(token.ASSIGN):
             return None
 
-        # TODO: 読み飛ばしている
-        while not self.cur_token_is(token.SEMICOLON):
+        self.next_token()
+        let.value = self.parse_expression(LOWEST)
+
+        if self.peek_token.token_type == token.SEMICOLON:
             self.next_token()
 
         return let
@@ -103,8 +107,9 @@ class Parser:
 
         self.next_token()
 
-        # TODO: 読み飛ばしている
-        while not self.cur_token_is(token.SEMICOLON):
+        ret.return_value = self.parse_expression(LOWEST)
+
+        if self.peek_token.token_type == token.SEMICOLON:
             self.next_token()
 
         return ret
@@ -217,6 +222,32 @@ class Parser:
             return None
         
         return expression
+    
+    def parse_call_expression(self, function):
+        exp = ast.CallExpression(self.cur_token)
+        exp.arguments = self.parse_call_arguments()
+        exp.function = function
+        return exp
+
+    def parse_call_arguments(self):
+        args = []
+        if self.peek_token.token_type == token.RPAREN:
+            self.next_token()
+            return args
+        
+        self.next_token()
+
+        args.append(self.parse_expression(LOWEST))
+
+        while self.peek_token.token_type == token.COMMA:
+            self.next_token()
+            self.next_token()
+            args.append(self.parse_expression(LOWEST))
+
+        if not self.expect_peek(token.RPAREN):
+            return None
+
+        return args
 
     def parse_if_expression(self):
         expression = ast.IfExpression(self.cur_token)
