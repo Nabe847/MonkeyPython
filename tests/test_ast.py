@@ -82,7 +82,7 @@ class TestParser(unittest.TestCase):
             
             self.assertEqual(1, len(program.statements))
             s = str(program)
-            print(s)
+            # print(s)
             self.assertEqual(test[1], s)
 
     def test_parsing_prefix_expressions(self):
@@ -93,7 +93,7 @@ class TestParser(unittest.TestCase):
             {"input": "!false", "operator": "!", "value": False, "type": ast.BooleanLiteral},
         ]
 
-        print()
+        # print()
         for test in prefix_tests:
             l = Lexer(test["input"])
             p = Parser(l)
@@ -103,7 +103,7 @@ class TestParser(unittest.TestCase):
             self.assertEqual(1, len(program.statements))
             statement = program.statements[0]
 
-            print(str(program))
+            # print(str(program))
 
             self.assertEqual(ast.ExpressionStatement, type(statement))
 
@@ -130,7 +130,7 @@ class TestParser(unittest.TestCase):
             ["false == false", False, "==", False, bool],
         ]
 
-        print()
+        # print()
         for test in infix_tests:
             l = Lexer(test[0])
             p = Parser(l)
@@ -140,7 +140,7 @@ class TestParser(unittest.TestCase):
             self.assertEqual(1, len(program.statements))
             statement = program.statements[0]
 
-            print(str(program))
+            # print(str(program))
 
             self.assertEqual(ast.ExpressionStatement, type(statement))
 
@@ -222,7 +222,7 @@ class TestParser(unittest.TestCase):
             ]
         ]
 
-        print()
+        # print()
         for test in tests:
             l = Lexer(test[0])
             p = Parser(l)
@@ -230,8 +230,38 @@ class TestParser(unittest.TestCase):
             self.check_parser_errors(p)
 
             s = str(program)
-            print(s)
+            # print(s)
             self.assertEqual(test[1], s)
+
+    def test_if_expression(self):
+        input = "if (x < y) { x }"
+        l = Lexer(input)
+        p = Parser(l)
+        program = p.parse_program()
+        self.check_parser_errors(p)
+
+        self.assertEqual(1, len(program.statements))
+        statement = program.statements[0]
+        self.assertEqual(ast.ExpressionStatement, type(statement))
+
+        expression = statement.expression
+        self.assertEqual(ast.IfExpression, type(expression))
+
+        condition = expression.condition
+        self.assertEqual(ast.InfixExpression, type(condition))
+        self.assert_literal(ast.Identifier, "x", condition.left)
+        self.assertEqual("<", condition.operator)
+        self.assert_literal(ast.Identifier, "y", condition.right)
+
+        self.assertEqual(1, len(expression.consequence.statements))
+        consequence = expression.consequence.statements[0]
+
+        self.assertEqual(ast.ExpressionStatement, type(consequence))
+
+        csq_exp = consequence.expression
+        self.assertEqual(ast.Identifier, type(csq_exp))
+        self.assertEqual("x", csq_exp.value)
+
 
     def assert_valid_let_statement(self, name, statement):
         self.assertEqual("let", statement.token_literal())
@@ -252,6 +282,7 @@ class TestParser(unittest.TestCase):
         if len(parser.errors) == 0:
             return
 
+        print()
         for msg in parser.errors:
             print(f"parser error: {msg}")
 

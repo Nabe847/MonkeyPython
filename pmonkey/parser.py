@@ -40,6 +40,7 @@ class Parser:
         self.prefix_parser_fns[token.TRUE] = self.parse_boolean_literal
         self.prefix_parser_fns[token.FALSE] = self.parse_boolean_literal
         self.prefix_parser_fns[token.LPAREN] = self.parse_grouped_expression
+        self.prefix_parser_fns[token.IF] = self.parse_if_expression
 
         self.infix_parser_fns[token.PLUS] = self.parse_infix_expression
         self.infix_parser_fns[token.MINUS] = self.parse_infix_expression
@@ -179,6 +180,39 @@ class Parser:
             return None
         
         return expression
+
+    def parse_if_expression(self):
+        expression = ast.IfExpression(self.cur_token)
+
+        if not self.expect_peek(token.LPAREN):
+            return None
+        
+        self.next_token()
+        expression.condition = self.parse_expression(LOWEST)
+
+        if not self.expect_peek(token.RPAREN):
+            return None
+
+        if not self.expect_peek(token.LBRACE):
+            return None
+        
+        expression.consequence = self.parse_block_statement()
+
+        return expression
+
+    def parse_block_statement(self):
+        block = ast.BlockStatement(self.cur_token)
+        self.next_token()
+
+        while self.cur_token.token_type != token.RBRACE \
+            and self.cur_token.token_type != token.EOF:
+            s = self.parse_statement()
+            if s:
+                block.statements.append(s)
+
+            self.next_token()
+        
+        return block
 
     def expect_peek(self, expected_type):
         if self.peek_token.token_type == expected_type:

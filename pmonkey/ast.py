@@ -84,6 +84,25 @@ class InfixExpression(Expression):
         s += ")"
         return s
 
+class IfExpression(Expression):
+    def __init__(self, token):
+        super().__init__(token)
+        self.condition = None
+        self.consequence = None
+        self.alternative = None
+    
+    def __str__(self):
+        s = "if "
+        s += str(self.condition)
+        s += " "
+        s += str(self.consequence)
+
+        if self.alternative:
+            s += " else "
+            s += str(self.alternative)
+        
+        return s
+
 
 class LetStatement(Statement):
     def __init__(self, token):
@@ -122,3 +141,11 @@ class ExpressionStatement(Statement):
             return str(self.expression)
         else:
             return ""
+
+class BlockStatement(Statement):
+    def __init__(self, token):
+        super().__init__(token)
+        self.statements = []
+    
+    def __str__(self):
+        return "\n".join([str(s) for s in self.statements]).rstrip()
