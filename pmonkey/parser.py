@@ -41,6 +41,7 @@ class Parser:
         self.prefix_parser_fns[token.FALSE] = self.parse_boolean_literal
         self.prefix_parser_fns[token.LPAREN] = self.parse_grouped_expression
         self.prefix_parser_fns[token.IF] = self.parse_if_expression
+        self.prefix_parser_fns[token.FUNCTION] = self.parse_function_literal
 
         self.infix_parser_fns[token.PLUS] = self.parse_infix_expression
         self.infix_parser_fns[token.MINUS] = self.parse_infix_expression
@@ -154,6 +155,42 @@ class Parser:
         lit = ast.BooleanLiteral(self.cur_token)
         lit.value = self.cur_token.token_type == token.TRUE
         return lit
+
+    def parse_function_literal(self):
+        lit = ast.FunctionLiteral(self.cur_token)
+
+        if not self.expect_peek(token.LPAREN):
+            return None
+        
+        lit.parameters = self.parse_function_parameters()
+
+        if not self.expect_peek(token.LBRACE):
+            return None
+        
+        lit.body = self.parse_block_statement()
+
+        return lit
+
+    def parse_function_parameters(self):
+        identifirers = []
+
+        if self.peek_token.token_type == token.RPAREN:
+            self.next_token()
+            return identifirers
+        
+        self.next_token()
+
+        identifirers.append(ast.Identifier(self.cur_token))
+
+        while self.peek_token.token_type == token.COMMA:
+            self.next_token()
+            self.next_token()
+            identifirers.append(ast.Identifier(self.cur_token))
+
+        if not self.expect_peek(token.RPAREN):
+            return None
+        
+        return identifirers
 
     def parse_prefix_expression(self):
         expression = ast.PrefixExpression(self.cur_token)

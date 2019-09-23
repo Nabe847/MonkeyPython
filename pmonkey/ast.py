@@ -59,6 +59,21 @@ class BooleanLiteral(Expression):
         return self.token.literal
 
 
+class FunctionLiteral(Expression):
+    def __init__(self, token):
+        super().__init__(token)
+        self.parameters = []
+        self.body = None
+
+    def __str__(self):
+        s = self.token_literal()
+        s += "("
+        s += ",".join(self.parameters)
+        s += ")"
+        s += str(self.body)
+        return s
+
+
 class PrefixExpression(Expression):
     def __init__(self, token):
         super().__init__(token)
@@ -84,13 +99,14 @@ class InfixExpression(Expression):
         s += ")"
         return s
 
+
 class IfExpression(Expression):
     def __init__(self, token):
         super().__init__(token)
         self.condition = None
         self.consequence = None
         self.alternative = None
-    
+
     def __str__(self):
         s = "if "
         s += str(self.condition)
@@ -100,7 +116,7 @@ class IfExpression(Expression):
         if self.alternative:
             s += " else "
             s += str(self.alternative)
-        
+
         return s
 
 
@@ -142,10 +158,11 @@ class ExpressionStatement(Statement):
         else:
             return ""
 
+
 class BlockStatement(Statement):
     def __init__(self, token):
         super().__init__(token)
         self.statements = []
-    
+
     def __str__(self):
         return "\n".join([str(s) for s in self.statements]).rstrip()

@@ -288,6 +288,59 @@ class TestParser(unittest.TestCase):
         self.assertEqual(ast.Identifier, type(alt_exp))
         self.assertEqual("y", alt_exp.value)
 
+    def test_function_literal_parsing(self):
+        input = "fn(x, y){ x + y }"
+        l = Lexer(input)
+        p = Parser(l)
+        program = p.parse_program()
+        self.check_parser_errors(p)
+
+        self.assertEqual(1, len(program.statements))
+        statement = program.statements[0]
+
+        self.assertEqual(ast.ExpressionStatement, type(statement))
+        function = statement.expression
+
+        self.assertEqual(ast.FunctionLiteral, type(function))
+
+        self.assertEqual(2, len(function.parameters))
+        self.assert_literal(ast.Identifier, "x", function.parameters[0])
+        self.assert_literal(ast.Identifier, "y", function.parameters[1])
+
+        self.assertEqual(ast.BlockStatement, type(function.body))
+        body = function.body
+        self.assertEqual(1, len(body.statements))
+
+        body_statement = body.statements[0]
+        self.assertEqual(ast.ExpressionStatement, type(body_statement))
+        infix = body_statement.expression
+        self.assertEqual(ast.InfixExpression, type(infix))
+        self.assert_literal(ast.Identifier, "x", infix.left)
+        self.assertEqual("+", infix.operator)
+        self.assert_literal(ast.Identifier, "y", infix.right)
+
+    def test_function_parameter_parsing(self):
+        tests = [
+            {"input": "fn(){}", "expected_params": []},
+            {"input": "fn(x){}", "expected_params": ["x"]},
+            {"input": "fn(x,y,z){}", "expected_params": ["x", "y", "z"]},
+        ]
+
+        for test in tests:
+            l = Lexer(test["input"])
+            p = Parser(l)
+            program = p.parse_program()
+            self.check_parser_errors(p)
+
+            statement = program.statements[0]
+            function = statement.expression
+
+            self.assertEqual(
+                len(test["expected_params"]), len(function.parameters))
+
+            for exp, act in zip(test["expected_params"], function.parameters):
+                self.assertEqual(exp, act.value)
+
     def assert_valid_let_statement(self, name, statement):
         self.assertEqual("let", statement.token_literal())
         self.assertEqual(ast.LetStatement, type(statement))
