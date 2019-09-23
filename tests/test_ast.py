@@ -25,12 +25,6 @@ class TestParser(unittest.TestCase):
         for test, statement in zip(tests, program.statements):
             self.assert_valid_let_statement(test, statement)
 
-    def assert_valid_let_statement(self, name, statement):
-        self.assertEqual("let", statement.token_literal())
-        self.assertEqual(ast.LetStatement, type(statement))
-        self.assertEqual(name, statement.name.value)
-        self.assertEqual(name, statement.name.token_literal())
-
     def test_return_statement(self):
         input = """
         return 5;
@@ -55,11 +49,11 @@ class TestParser(unittest.TestCase):
         parser = Parser(l)
         program = parser.parse_program()
         self.check_parser_errors(parser)
+
         self.assertEqual(1, len(program.statements))
+
         ident = program.statements[0].expression
-        self.assertEqual(ast.Identifier, type(ident))
-        self.assertEqual("foobar", ident.value)
-        self.assertEqual("foobar", ident.token_literal())
+        self.assert_expression(ast.Identifier, "foobar", "foobar", ident)
 
     def test_integer_literal_expression(self):
         input = "5;"
@@ -67,11 +61,11 @@ class TestParser(unittest.TestCase):
         parser = Parser(l)
         program = parser.parse_program()
         self.check_parser_errors(parser)
+
         self.assertEqual(1, len(program.statements))
+
         literal = program.statements[0].expression
-        self.assertEqual(ast.IntegerLiteral, type(literal))
-        self.assertEqual(5, literal.value)
-        self.assertEqual("5", literal.token_literal())
+        self.assert_expression(ast.IntegerLiteral, 5, "5", literal)
 
     def test_parsing_prefix_expressions(self):
         prefix_tests = [
@@ -193,10 +187,21 @@ class TestParser(unittest.TestCase):
             print(s)
             self.assertEqual(test[1], s)
 
+    def assert_valid_let_statement(self, name, statement):
+        self.assertEqual("let", statement.token_literal())
+        self.assertEqual(ast.LetStatement, type(statement))
+        self.assertEqual(name, statement.name.value)
+        self.assertEqual(name, statement.name.token_literal())
+
     def assert_integer_literal(self, expected, expression):
         self.assertEqual(ast.IntegerLiteral, type(expression))
         self.assertEqual(expected, expression.value)
         self.assertEqual(str(expected), expression.token_literal())
+
+    def assert_expression(self, exp_type, exp_value, exp_literal, expression):
+        self.assertEqual(exp_type, type(expression))
+        self.assertEqual(exp_value, expression.value)
+        self.assertEqual(exp_literal, expression.token_literal())
 
     def check_parser_errors(self, parser):
         if len(parser.errors) == 0:
