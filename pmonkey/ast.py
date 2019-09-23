@@ -120,6 +120,20 @@ class IfExpression(Expression):
         return s
 
 
+class CallExpression(Expression):
+    def __init__(self, token):
+        super().__init__(token)
+        self.function = None
+        self.arguments = []
+
+    def __str__(self):
+        s = str(self.function)
+        s += "("
+        s += ",".join([str(a) for a in self.arguments])
+        s += ")"
+        return s
+
+
 class LetStatement(Statement):
     def __init__(self, token):
         super().__init__(token)
