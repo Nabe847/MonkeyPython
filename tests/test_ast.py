@@ -67,10 +67,30 @@ class TestParser(unittest.TestCase):
         literal = program.statements[0].expression
         self.assert_expression(ast.IntegerLiteral, 5, "5", literal)
 
+    def test_boolean_literal_expression(self):
+        tests = [
+            ["true", "true"],
+            ["false", "false"],
+            ["3 > 5 == false", "((3>5)==false)"],
+            ["3 < 5 == true", "((3<5)==true)"],
+        ]
+
+        for test in tests:
+            l = Lexer(test[0])
+            p = Parser(l)
+            program = p.parse_program()
+            
+            self.assertEqual(1, len(program.statements))
+            s = str(program)
+            print(s)
+            self.assertEqual(test[1], s)
+
     def test_parsing_prefix_expressions(self):
         prefix_tests = [
-            {"input": "!5;", "operator": "!", "integer_value": 5},
-            {"input": "-15", "operator": "-", "integer_value": 15},
+            {"input": "!5;", "operator": "!", "value": 5, "type": ast.IntegerLiteral},
+            {"input": "-15", "operator": "-", "value": 15, "type": ast.IntegerLiteral},
+            {"input": "!true", "operator": "!", "value": True, "type": ast.BooleanLiteral},
+            {"input": "!false", "operator": "!", "value": False, "type": ast.BooleanLiteral},
         ]
 
         print()
@@ -90,19 +110,24 @@ class TestParser(unittest.TestCase):
             expression = statement.expression
             self.assertEqual(ast.PrefixExpression, type(expression))
             self.assertEqual(test["operator"], expression.operator)
-            self.assert_integer_literal(
-                test["integer_value"], expression.right)
+            self.assert_literal(test["type"], test["value"], expression.right)
 
     def test_parsing_infix_expressions(self):
+        integer = ast.IntegerLiteral
+        bool = ast.BooleanLiteral
         infix_tests = [
-            ["5+5;", 5, "+", 5],
-            ["5-5;", 5, "-", 5],
-            ["5*5;", 5, "*", 5],
-            ["5/5;", 5, "/", 5],
-            ["5>5;", 5, ">", 5],
-            ["5<5;", 5, "<", 5],
-            ["5==5;", 5, "==", 5],
-            ["5!=5;", 5, "!=", 5],
+            ["5+5;", 5, "+", 5, integer],
+            ["5-5;", 5, "-", 5, integer],
+            ["5*5;", 5, "*", 5, integer],
+            ["5/5;", 5, "/", 5, integer],
+            ["5>5;", 5, ">", 5, integer],
+            ["5<5;", 5, "<", 5, integer],
+            ["5==5;", 5, "==", 5, integer],
+            ["5!=5;", 5, "!=", 5, integer],
+
+            ["true == true", True, "==", True, bool],
+            ["true != false", True, "!=", False, bool],
+            ["false == false", False, "==", False, bool],
         ]
 
         print()
@@ -121,9 +146,9 @@ class TestParser(unittest.TestCase):
 
             expression = statement.expression
             self.assertEqual(ast.InfixExpression, type(expression))
-            self.assert_integer_literal(test[1], expression.left)
+            self.assert_literal(test[4], test[1], expression.left)
             self.assertEqual(test[2], expression.operator)
-            self.assert_integer_literal(test[3], expression.right)
+            self.assert_literal(test[4], test[3], expression.right)
 
     def test_operator_precedence_parsing(self):
         tests = [
@@ -177,6 +202,7 @@ class TestParser(unittest.TestCase):
             ],
         ]
 
+        print()
         for test in tests:
             l = Lexer(test[0])
             p = Parser(l)
@@ -193,10 +219,9 @@ class TestParser(unittest.TestCase):
         self.assertEqual(name, statement.name.value)
         self.assertEqual(name, statement.name.token_literal())
 
-    def assert_integer_literal(self, expected, expression):
-        self.assertEqual(ast.IntegerLiteral, type(expression))
-        self.assertEqual(expected, expression.value)
-        self.assertEqual(str(expected), expression.token_literal())
+    def assert_literal(self, exp_type, exp_value, expression):
+        self.assertEqual(exp_type, type(expression))
+        self.assertEqual(exp_value, expression.value)
 
     def assert_expression(self, exp_type, exp_value, exp_literal, expression):
         self.assertEqual(exp_type, type(expression))

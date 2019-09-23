@@ -34,9 +34,11 @@ class Parser:
         self.infix_parser_fns = {}
 
         self.prefix_parser_fns[token.IDENT] = self.parse_identifier
-        self.prefix_parser_fns[token.INT] = self.parse_integerliteral
+        self.prefix_parser_fns[token.INT] = self.parse_integer_literal
         self.prefix_parser_fns[token.BANG] = self.parse_prefix_expression
         self.prefix_parser_fns[token.MINUS] = self.parse_prefix_expression
+        self.prefix_parser_fns[token.TRUE] = self.parse_boolean_literal
+        self.prefix_parser_fns[token.FALSE] = self.parse_boolean_literal
 
         self.infix_parser_fns[token.PLUS] = self.parse_infix_expression
         self.infix_parser_fns[token.MINUS] = self.parse_infix_expression
@@ -134,7 +136,7 @@ class Parser:
     def parse_identifier(self):
         return ast.Identifier(self.cur_token)
 
-    def parse_integerliteral(self):
+    def parse_integer_literal(self):
         lit = ast.IntegerLiteral(self.cur_token)
         v = lit.token_literal()
 
@@ -144,6 +146,11 @@ class Parser:
 
         lit.value = int(v)
 
+        return lit
+    
+    def parse_boolean_literal(self):
+        lit = ast.BooleanLiteral(self.cur_token)
+        lit.value = self.cur_token.token_type == token.TRUE
         return lit
 
     def parse_prefix_expression(self):

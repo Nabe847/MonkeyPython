@@ -47,7 +47,16 @@ class IntegerLiteral(Expression):
         self.value = None
 
     def __str__(self):
-        return str(self.token_literal())
+        return self.token.literal
+
+
+class BooleanLiteral(Expression):
+    def __init__(self, token):
+        super().__init__(token)
+        self.value = None
+
+    def __str__(self):
+        return self.token.literal
 
 
 class PrefixExpression(Expression):
