@@ -89,6 +89,29 @@ class TestEvaluator(unittest.TestCase):
             else:
                 self.assertEqual(Null, type(evaluated))
 
+    def test_return_statements(self):
+        tests = [
+            ["return 10;", 10],
+            ["return 10; 9;", 10],
+            ["return 2 * 5; 9;", 10],
+            ["9; return 2 * 5; 9;", 10],
+            [
+                """
+                if(10 > 1){
+                    if(10 > 1){
+                        return 10;
+                    }
+                    return 1
+                }
+                """,
+                10
+            ],
+        ]
+
+        for s, exp_value in tests:
+            evaluated = self.eval(s)
+            self.assert_integer_object(exp_value, evaluated)
+
     def eval(self, input_str):
         l = Lexer(input_str)
         p = Parser(l)

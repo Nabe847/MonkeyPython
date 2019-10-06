@@ -1,6 +1,8 @@
+import pmonkey.objects as obj
 from pmonkey.objects import Integer
 from pmonkey.objects import Boolean
 from pmonkey.objects import Null
+from pmonkey.objects import ReturnValue
 import pmonkey.ast as ast
 
 TRUE = Boolean(True)
@@ -11,7 +13,7 @@ NULL = Null()
 def eval(node):
     node_type = type(node)
     if node_type == ast.Program:
-        return eval_statements(node.statements)
+        return eval_program(node.statements)
     elif node_type == ast.ExpressionStatement:
         return eval(node.expression)
     elif node_type == ast.IntegerLiteral:
@@ -28,16 +30,31 @@ def eval(node):
         right = eval(node.right)
         return eval_infix_expression(node.operator, left, right)
     elif node_type == ast.BlockStatement:
-        return eval_statements(node.statements)
+        return eval_block_statement(node.statements)
     elif node_type == ast.IfExpression:
         return eval_if_expression(node)
+    elif node_type == ast.ReturnStatement:
+        val = eval(node.return_value)
+        return ReturnValue(val)
     else:
         return NULL
 
 
-def eval_statements(statements):
+def eval_program(statements):
     for statement in statements:
         result = eval(statement)
+        if result != None and result.type() == obj.RETURN_VALUE_OBJ:
+            return result.value
+
+    return result
+
+
+def eval_block_statement(statements):
+    for statement in statements:
+        result = eval(statement)
+
+        if result != None and result.type() == obj.RETURN_VALUE_OBJ:
+            return result
 
     return result
 
@@ -101,6 +118,7 @@ def eval_integer_infix_expression(op, left, right):
     else:
         return NULL
 
+
 def eval_if_expression(node):
     condition = eval(node.condition)
     if is_truthy(condition):
@@ -109,6 +127,7 @@ def eval_if_expression(node):
         return eval(node.alternative)
     else:
         return NULL
+
 
 def is_truthy(obj):
     if obj == NULL:
@@ -119,6 +138,7 @@ def is_truthy(obj):
         return False
     else:
         return True
+
 
 def native_boolean_to_boolean_object(boolean_value):
     return TRUE if boolean_value else FALSE
