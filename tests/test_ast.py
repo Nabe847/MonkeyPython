@@ -416,7 +416,3 @@ class TestParser(unittest.TestCase):
             print(f"parser error: {msg}")
 
         self.fail()
-
-
-if __name__ == '__main__':
-    unittest.main()
