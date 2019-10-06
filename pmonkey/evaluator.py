@@ -23,6 +23,10 @@ def eval(node):
     elif node_type == ast.PrefixExpression:
         right = eval(node.right)
         return eval_prefix_expression(node.operator, right)
+    elif node_type == ast.InfixExpression:
+        left = eval(node.left)
+        right = eval(node.right)
+        return eval_infix_expression(node.operator, left, right)
     else:
         return NULL
 
@@ -39,6 +43,13 @@ def eval_prefix_expression(op, right):
         return eval_bang_operator_expression(right)
     elif op == "-":
         return eval_minus_prefix_operator_expression(right)
+    else:
+        return NULL
+
+
+def eval_infix_expression(op, left, right):
+    if type(left) == Integer and type(right) == Integer:
+        return eval_integer_infix_expression(op, left, right)
     else:
         return NULL
 
@@ -60,3 +71,16 @@ def eval_minus_prefix_operator_expression(right):
 
     value = right.value
     return Integer(-value)
+
+
+def eval_integer_infix_expression(op, left, right):
+    if op == "+":
+        return Integer(left.value + right.value)
+    elif op == "-":
+        return Integer(left.value - right.value)
+    elif op == "*":
+        return Integer(left.value * right.value)
+    elif op == "/":
+        return Integer(left.value / right.value)
+    else:
+        return NULL
