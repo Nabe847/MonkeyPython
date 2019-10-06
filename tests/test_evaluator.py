@@ -28,6 +28,20 @@ class TestEvaluator(unittest.TestCase):
             obj = self.eval(s)
             self.assert_boolean_object(exp_value, obj)
 
+    def test_bang_operator(self):
+        tests = [
+            ["!true", False],
+            ["!false", True],
+            ["!5", False],
+            ["!!true", True],
+            ["!!false", False],
+            ["!!5", True],
+        ]
+
+        for s, exp_value in tests:
+            obj = self.eval(s)
+            self.assert_boolean_object(exp_value, obj)
+
     def eval(self, input_str):
         l = Lexer(input_str)
         p = Parser(l)

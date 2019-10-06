@@ -19,8 +19,11 @@ def eval(node):
     elif node_type == ast.BooleanLiteral:
         bool_obj = TRUE if node.value else FALSE
         return bool_obj
+    elif node_type == ast.PrefixExpression:
+        right = eval(node.right)
+        return eval_prefix_expression(node.operator, right)
     else:
-        return None
+        return NULL
 
 
 def eval_statements(statements):
@@ -28,3 +31,20 @@ def eval_statements(statements):
         result = eval(statement)
 
     return result
+
+def eval_prefix_expression(op, right):
+    if op == "!":
+        return eval_bang_operator_expression(right)
+    else:
+        return NULL
+
+def eval_bang_operator_expression(right):
+    if right == TRUE:
+        return FALSE
+    elif right == FALSE:
+        return TRUE
+    elif right == NULL:
+        return TRUE
+    else:
+        return FALSE
+
