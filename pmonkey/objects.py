@@ -14,8 +14,8 @@ class Integer:
         return INTEGER_OBJ
 
 class Boolean:
-    def __init__(self):
-        self.value = None
+    def __init__(self, value):
+        self.value = value
 
     def inspect(self):
         return str(self.value)

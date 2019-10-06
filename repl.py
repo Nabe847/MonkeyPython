@@ -1,6 +1,7 @@
 import pmonkey.lexer as lexer
 import pmonkey.parser as parser
 import pmonkey.token as token
+import pmonkey.evaluator as evaluator
 
 PROMPT = ">> "
 
@@ -17,6 +18,7 @@ MONKEY_FACE = r"""
         '._ '-=-' _.'
            '-----'
 """
+
 
 def start():
     while True:
@@ -37,8 +39,10 @@ def start():
             print("\n".join([str(e) for e in psr.errors]))
             continue
 
-        print(program)
-        print()
+        evaluated = evaluator.eval(program)
+        if evaluated != None:
+            print(evaluated.inspect())
+
 
 if __name__ == "__main__":
     start()
