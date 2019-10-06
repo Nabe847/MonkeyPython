@@ -12,6 +12,8 @@ class TestEvaluator(unittest.TestCase):
         tests = [
             ["5", 5],
             ["10", 10],
+            ["-5", -5],
+            ["-10", -10],
         ]
 
         for s, exp_value in tests:

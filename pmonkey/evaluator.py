@@ -7,6 +7,7 @@ TRUE = Boolean(True)
 FALSE = Boolean(False)
 NULL = Null()
 
+
 def eval(node):
     node_type = type(node)
     if node_type == ast.Program:
@@ -32,11 +33,15 @@ def eval_statements(statements):
 
     return result
 
+
 def eval_prefix_expression(op, right):
     if op == "!":
         return eval_bang_operator_expression(right)
+    elif op == "-":
+        return eval_minus_prefix_operator_expression(right)
     else:
         return NULL
+
 
 def eval_bang_operator_expression(right):
     if right == TRUE:
@@ -48,3 +53,10 @@ def eval_bang_operator_expression(right):
     else:
         return FALSE
 
+
+def eval_minus_prefix_operator_expression(right):
+    if type(right) != Integer:
+        return NULL
+
+    value = right.value
+    return Integer(-value)
