@@ -18,7 +18,7 @@ def eval(node):
         int_obj = Integer(node.value)
         return int_obj
     elif node_type == ast.BooleanLiteral:
-        bool_obj = TRUE if node.value else FALSE
+        bool_obj = native_boolean_to_boolean_object(node.value)
         return bool_obj
     elif node_type == ast.PrefixExpression:
         right = eval(node.right)
@@ -50,6 +50,10 @@ def eval_prefix_expression(op, right):
 def eval_infix_expression(op, left, right):
     if type(left) == Integer and type(right) == Integer:
         return eval_integer_infix_expression(op, left, right)
+    elif op == "==":
+        return native_boolean_to_boolean_object(left == right)
+    elif op == "!=":
+        return native_boolean_to_boolean_object(left != right)
     else:
         return NULL
 
@@ -82,5 +86,17 @@ def eval_integer_infix_expression(op, left, right):
         return Integer(left.value * right.value)
     elif op == "/":
         return Integer(left.value / right.value)
+    elif op == "<":
+        return native_boolean_to_boolean_object(left.value < right.value)
+    elif op == ">":
+        return native_boolean_to_boolean_object(left.value > right.value)
+    elif op == "==":
+        return native_boolean_to_boolean_object(left.value == right.value)
+    elif op == "!=":
+        return native_boolean_to_boolean_object(left.value != right.value)
     else:
         return NULL
+
+
+def native_boolean_to_boolean_object(boolean_value):
+    return TRUE if boolean_value else FALSE
