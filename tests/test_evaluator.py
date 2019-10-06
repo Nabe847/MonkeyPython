@@ -3,6 +3,7 @@ from pmonkey.lexer import Lexer
 from pmonkey.parser import Parser
 from pmonkey.objects import Integer
 from pmonkey.objects import Boolean
+from pmonkey.objects import Null
 import pmonkey.evaluator as evaluator
 
 
@@ -69,6 +70,24 @@ class TestEvaluator(unittest.TestCase):
         for s, exp_value in tests:
             obj = self.eval(s)
             self.assert_boolean_object(exp_value, obj)
+
+    def test_if_else_expressions(self):
+        tests = [
+            ["if(true){ 10 }", 10],
+            ["if(false){ 10 }", None],
+            ["if(1){ 10 }", 10],
+            ["if(1 < 2){ 10 }", 10],
+            ["if(1 > 2){ 10 }", None],
+            ["if(1 > 2){ 10 } else { 20 }", 20],
+            ["if(1 < 2){ 10 } else { 20 }", 10],
+        ]
+
+        for s, exp_value in tests:
+            evaluated = self.eval(s)
+            if exp_value:
+                self.assert_integer_object(exp_value, evaluated)
+            else:
+                self.assertEqual(Null, type(evaluated))
 
     def eval(self, input_str):
         l = Lexer(input_str)

@@ -27,6 +27,10 @@ def eval(node):
         left = eval(node.left)
         right = eval(node.right)
         return eval_infix_expression(node.operator, left, right)
+    elif node_type == ast.BlockStatement:
+        return eval_statements(node.statements)
+    elif node_type == ast.IfExpression:
+        return eval_if_expression(node)
     else:
         return NULL
 
@@ -97,6 +101,24 @@ def eval_integer_infix_expression(op, left, right):
     else:
         return NULL
 
+def eval_if_expression(node):
+    condition = eval(node.condition)
+    if is_truthy(condition):
+        return eval(node.consequence)
+    elif node.alternative:
+        return eval(node.alternative)
+    else:
+        return NULL
+
+def is_truthy(obj):
+    if obj == NULL:
+        return False
+    elif obj == TRUE:
+        return True
+    elif obj == FALSE:
+        return False
+    else:
+        return True
 
 def native_boolean_to_boolean_object(boolean_value):
     return TRUE if boolean_value else FALSE
