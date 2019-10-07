@@ -3,6 +3,7 @@ INTEGER_OBJ = "INTEGER"
 BOOLEAN_OBJ = "BOOLEAN"
 NULL_OBJ = "NULL"
 RETURN_VALUE_OBJ = "RETURN_VALUE"
+ERROR_OBJ = "ERROR"
 
 
 class Integer:
@@ -44,3 +45,13 @@ class ReturnValue:
 
     def inspect(self):
         return self.value.inspect()
+
+class Error:
+    def __init__(self, message):
+        self.message = message
+    
+    def type(self):
+        return ERROR_OBJ
+    
+    def inspect(self):
+        return "ERROR: " + self.message

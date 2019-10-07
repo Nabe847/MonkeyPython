@@ -4,6 +4,7 @@ from pmonkey.parser import Parser
 from pmonkey.objects import Integer
 from pmonkey.objects import Boolean
 from pmonkey.objects import Null
+from pmonkey.objects import Error
 import pmonkey.evaluator as evaluator
 
 
@@ -111,6 +112,33 @@ class TestEvaluator(unittest.TestCase):
         for s, exp_value in tests:
             evaluated = self.eval(s)
             self.assert_integer_object(exp_value, evaluated)
+
+    def test_error_handling(self):
+        tests = [
+            ["5 + true", "type mismatch: INTEGER + BOOLEAN"],
+            ["5 + true; 5", "type mismatch: INTEGER + BOOLEAN"],
+            ["-true", "unknown operator: -BOOLEAN"],
+            ["true + false", "unknown operator: BOOLEAN + BOOLEAN"],
+            ["5; true + false; 5", "unknown operator: BOOLEAN + BOOLEAN"],
+            ["if (10 > 1) { true + false; }",
+             "unknown operator: BOOLEAN + BOOLEAN"],
+            [
+                """
+                if(10 > 1){
+                    if(10 > 1){
+                        return true + false;
+                    }
+                    return 1;
+                }
+                """,
+                "unknown operator: BOOLEAN + BOOLEAN"
+            ],
+        ]
+
+        for test, exp_value in tests:
+            evaluated = self.eval(test)
+            self.assertEqual(Error, type(evaluated))
+            self.assertEqual(exp_value, evaluated.message)
 
     def eval(self, input_str):
         l = Lexer(input_str)

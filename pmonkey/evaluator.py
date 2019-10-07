@@ -3,6 +3,7 @@ from pmonkey.objects import Integer
 from pmonkey.objects import Boolean
 from pmonkey.objects import Null
 from pmonkey.objects import ReturnValue
+from pmonkey.objects import Error
 import pmonkey.ast as ast
 
 TRUE = Boolean(True)
@@ -24,10 +25,18 @@ def eval(node):
         return bool_obj
     elif node_type == ast.PrefixExpression:
         right = eval(node.right)
+        if is_error(right):
+            return right
         return eval_prefix_expression(node.operator, right)
     elif node_type == ast.InfixExpression:
         left = eval(node.left)
+        if is_error(left):
+            return left
+
         right = eval(node.right)
+        if is_error(right):
+            return right
+
         return eval_infix_expression(node.operator, left, right)
     elif node_type == ast.BlockStatement:
         return eval_block_statement(node.statements)
@@ -35,6 +44,8 @@ def eval(node):
         return eval_if_expression(node)
     elif node_type == ast.ReturnStatement:
         val = eval(node.return_value)
+        if is_error(val):
+            return val
         return ReturnValue(val)
     else:
         return NULL
@@ -43,8 +54,10 @@ def eval(node):
 def eval_program(statements):
     for statement in statements:
         result = eval(statement)
-        if result != None and result.type() == obj.RETURN_VALUE_OBJ:
+        if result.type() == obj.RETURN_VALUE_OBJ:
             return result.value
+        elif result.type() == obj.ERROR_OBJ:
+            return result
 
     return result
 
@@ -53,7 +66,7 @@ def eval_block_statement(statements):
     for statement in statements:
         result = eval(statement)
 
-        if result != None and result.type() == obj.RETURN_VALUE_OBJ:
+        if result.type() == obj.RETURN_VALUE_OBJ or result.type() == obj.ERROR_OBJ:
             return result
 
     return result
@@ -65,7 +78,7 @@ def eval_prefix_expression(op, right):
     elif op == "-":
         return eval_minus_prefix_operator_expression(right)
     else:
-        return NULL
+        return Error(f"unknown operator: {op}{right.type()}")
 
 
 def eval_infix_expression(op, left, right):
@@ -75,8 +88,10 @@ def eval_infix_expression(op, left, right):
         return native_boolean_to_boolean_object(left == right)
     elif op == "!=":
         return native_boolean_to_boolean_object(left != right)
+    elif left.type() != right.type():
+        return Error(f"type mismatch: {left.type()} {op} {right.type()}")
     else:
-        return NULL
+        return Error(f"unknown operator: {left.type()} {op} {right.type()}")
 
 
 def eval_bang_operator_expression(right):
@@ -92,7 +107,7 @@ def eval_bang_operator_expression(right):
 
 def eval_minus_prefix_operator_expression(right):
     if type(right) != Integer:
-        return NULL
+        return Error(f"unknown operator: -{right.type()}")
 
     value = right.value
     return Integer(-value)
@@ -116,11 +131,14 @@ def eval_integer_infix_expression(op, left, right):
     elif op == "!=":
         return native_boolean_to_boolean_object(left.value != right.value)
     else:
-        return NULL
+        return Error(f"unknown operator: {left.type()} {op} {right.type()}")
 
 
 def eval_if_expression(node):
     condition = eval(node.condition)
+    if is_error(condition):
+        return condition
+        
     if is_truthy(condition):
         return eval(node.consequence)
     elif node.alternative:
@@ -129,12 +147,12 @@ def eval_if_expression(node):
         return NULL
 
 
-def is_truthy(obj):
-    if obj == NULL:
+def is_truthy(value):
+    if value == NULL:
         return False
-    elif obj == TRUE:
+    elif value == TRUE:
         return True
-    elif obj == FALSE:
+    elif value == FALSE:
         return False
     else:
         return True
@@ -142,3 +160,7 @@ def is_truthy(obj):
 
 def native_boolean_to_boolean_object(boolean_value):
     return TRUE if boolean_value else FALSE
+
+
+def is_error(node):
+    return node.type() == obj.ERROR_OBJ
