@@ -11,12 +11,12 @@ FALSE = Boolean(False)
 NULL = Null()
 
 
-def eval(node):
+def eval(node, env):
     node_type = type(node)
     if node_type == ast.Program:
-        return eval_program(node.statements)
+        return eval_program(node.statements, env)
     elif node_type == ast.ExpressionStatement:
-        return eval(node.expression)
+        return eval(node.expression, env)
     elif node_type == ast.IntegerLiteral:
         int_obj = Integer(node.value)
         return int_obj
@@ -24,47 +24,56 @@ def eval(node):
         bool_obj = native_boolean_to_boolean_object(node.value)
         return bool_obj
     elif node_type == ast.PrefixExpression:
-        right = eval(node.right)
+        right = eval(node.right, env)
         if is_error(right):
             return right
         return eval_prefix_expression(node.operator, right)
     elif node_type == ast.InfixExpression:
-        left = eval(node.left)
+        left = eval(node.left, env)
         if is_error(left):
             return left
 
-        right = eval(node.right)
+        right = eval(node.right, env)
         if is_error(right):
             return right
 
         return eval_infix_expression(node.operator, left, right)
     elif node_type == ast.BlockStatement:
-        return eval_block_statement(node.statements)
+        return eval_block_statement(node.statements, env)
     elif node_type == ast.IfExpression:
-        return eval_if_expression(node)
+        return eval_if_expression(node, env)
     elif node_type == ast.ReturnStatement:
-        val = eval(node.return_value)
+        val = eval(node.return_value, env)
         if is_error(val):
             return val
         return ReturnValue(val)
+    elif node_type == ast.LetStatement:
+        val = eval(node.value, env)
+        if is_error(val):
+            return val
+        env.set(node.name.value, val)
+        return
+    elif node_type == ast.Identifier:
+        return eval_identifier(node, env)
     else:
         return NULL
 
 
-def eval_program(statements):
+def eval_program(statements, env):
     for statement in statements:
-        result = eval(statement)
-        if result.type() == obj.RETURN_VALUE_OBJ:
-            return result.value
-        elif result.type() == obj.ERROR_OBJ:
-            return result
+        result = eval(statement, env)
+        if result != None:
+            if result.type() == obj.RETURN_VALUE_OBJ:
+                return result.value
+            elif result.type() == obj.ERROR_OBJ:
+                return result
 
     return result
 
 
-def eval_block_statement(statements):
+def eval_block_statement(statements, env):
     for statement in statements:
-        result = eval(statement)
+        result = eval(statement, env)
 
         if result.type() == obj.RETURN_VALUE_OBJ or result.type() == obj.ERROR_OBJ:
             return result
@@ -134,17 +143,24 @@ def eval_integer_infix_expression(op, left, right):
         return Error(f"unknown operator: {left.type()} {op} {right.type()}")
 
 
-def eval_if_expression(node):
-    condition = eval(node.condition)
+def eval_if_expression(node, env):
+    condition = eval(node.condition, env)
     if is_error(condition):
         return condition
-        
+
     if is_truthy(condition):
-        return eval(node.consequence)
+        return eval(node.consequence, env)
     elif node.alternative:
-        return eval(node.alternative)
+        return eval(node.alternative, env)
     else:
         return NULL
+
+
+def eval_identifier(node, env):
+    val = env.get(node.value)
+    if val == None:
+        return Error(f"identifier not found: {node.value}")
+    return val
 
 
 def is_truthy(value):

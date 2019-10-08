@@ -2,6 +2,7 @@ import pmonkey.lexer as lexer
 import pmonkey.parser as parser
 import pmonkey.token as token
 import pmonkey.evaluator as evaluator
+from pmonkey.environment import Environment
 
 PROMPT = ">> "
 
@@ -21,6 +22,7 @@ MONKEY_FACE = r"""
 
 
 def start():
+    env = Environment()
     while True:
         print(PROMPT, end='')
         source = input()
@@ -39,7 +41,7 @@ def start():
             print("\n".join([str(e) for e in psr.errors]))
             continue
 
-        evaluated = evaluator.eval(program)
+        evaluated = evaluator.eval(program, env)
         if evaluated != None:
             print(evaluated.inspect())
 

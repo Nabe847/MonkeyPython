@@ -5,6 +5,7 @@ from pmonkey.objects import Integer
 from pmonkey.objects import Boolean
 from pmonkey.objects import Null
 from pmonkey.objects import Error
+from pmonkey.environment import Environment
 import pmonkey.evaluator as evaluator
 
 
@@ -133,6 +134,7 @@ class TestEvaluator(unittest.TestCase):
                 """,
                 "unknown operator: BOOLEAN + BOOLEAN"
             ],
+            ["foobar", "identifier not found: foobar"],
         ]
 
         for test, exp_value in tests:
@@ -140,11 +142,24 @@ class TestEvaluator(unittest.TestCase):
             self.assertEqual(Error, type(evaluated))
             self.assertEqual(exp_value, evaluated.message)
 
+    def test_let_statements(self):
+        tests = [
+            ["let a = 5; a;", 5],
+            ["let a = 5*5; a;", 25],
+            ["let a = 5; let b = a; b;", 5],
+            ["let a = 5; let b = a; let c = a + b + 5; c;", 15],
+        ]
+
+        for s, exp_value in tests:
+            evaluated = self.eval(s)
+            self.assert_integer_object(exp_value, evaluated)
+
     def eval(self, input_str):
         l = Lexer(input_str)
         p = Parser(l)
         prg = p.parse_program()
-        obj = evaluator.eval(prg)
+        env = Environment()
+        obj = evaluator.eval(prg, env)
         return obj
 
     def assert_boolean_object(self, exp_value, obj):
@@ -152,5 +167,7 @@ class TestEvaluator(unittest.TestCase):
         self.assertEqual(exp_value, obj.value)
 
     def assert_integer_object(self, exp_value, obj):
+        if type(obj) == Error:
+            print(obj.inspect())
         self.assertEqual(Integer, type(obj))
         self.assertEqual(exp_value, obj.value)
