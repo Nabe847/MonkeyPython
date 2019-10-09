@@ -1,10 +1,12 @@
 import pmonkey.objects as obj
+import pmonkey.ast as ast
+from pmonkey.environment import Environment
 from pmonkey.objects import Integer
 from pmonkey.objects import Boolean
 from pmonkey.objects import Null
 from pmonkey.objects import ReturnValue
 from pmonkey.objects import Error
-import pmonkey.ast as ast
+from pmonkey.objects import Function
 
 TRUE = Boolean(True)
 FALSE = Boolean(False)
@@ -55,6 +57,19 @@ def eval(node, env):
         return
     elif node_type == ast.Identifier:
         return eval_identifier(node, env)
+    elif node_type == ast.FunctionLiteral:
+        params = node.parameters
+        body = node.body
+        return Function(params, body, env)
+    elif node_type == ast.CallExpression:
+        function = eval(node.function, env)
+        if is_error(function):
+            return function
+        args = eval_expressions(node.arguments, env)
+        if len(args) == 1 and is_error(args[0]):
+            return args
+
+        return apply_function(function, args)
     else:
         return NULL
 
@@ -163,6 +178,17 @@ def eval_identifier(node, env):
     return val
 
 
+def eval_expressions(exps, env):
+    values = []
+    for e in exps:
+        evaluated = eval(e, env)
+        if is_error(evaluated):
+            return [evaluated]
+        values.append(evaluated)
+
+    return values
+
+
 def is_truthy(value):
     if value == NULL:
         return False
@@ -172,6 +198,26 @@ def is_truthy(value):
         return False
     else:
         return True
+
+
+def apply_function(function, args):
+    env = extend_function_environment(function, args)
+    evaluated = eval(function.body, env)
+    if is_error(evaluated):
+        return evaluated
+
+    if evaluated.type() == obj.RETURN_VALUE_OBJ:
+        return evaluated.value
+    else:
+        return evaluated
+
+
+def extend_function_environment(function, args):
+    internal_env = Environment(function.env)
+    for i, param in enumerate(function.parameters):
+        internal_env.set(param.value, args[i])
+
+    return internal_env
 
 
 def native_boolean_to_boolean_object(boolean_value):

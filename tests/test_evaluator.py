@@ -5,6 +5,7 @@ from pmonkey.objects import Integer
 from pmonkey.objects import Boolean
 from pmonkey.objects import Null
 from pmonkey.objects import Error
+from pmonkey.objects import Function
 from pmonkey.environment import Environment
 import pmonkey.evaluator as evaluator
 
@@ -153,6 +154,45 @@ class TestEvaluator(unittest.TestCase):
         for s, exp_value in tests:
             evaluated = self.eval(s)
             self.assert_integer_object(exp_value, evaluated)
+
+    def test_function_object(self):
+        s = "fn(x) { x + 2; };"
+        evaluated = self.eval(s)
+        self.assertEqual(Function, type(evaluated))
+
+        self.assertEqual(1, len(evaluated.parameters))
+        self.assertEqual("x", str(evaluated.parameters[0]))
+
+        exp_body = "(x+2)"
+        self.assertEqual(exp_body, str(evaluated.body))
+
+    def test_function_application(self):
+        tests = [
+            ["let identity = fn(x) { x; }; identity(5)", 5],
+            ["let identity = fn(x) { return x; }; identity(5)", 5],
+            ["let double = fn(x) { x * 2; }; double(5)", 10],
+            ["let add = fn(x, y) { x + y; }; add(5, 5)", 10],
+            ["let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20],
+            ["fn(x) { x; }(5)", 5],
+        ]
+
+        for s, exp_value in tests:
+            evaluated = self.eval(s)
+            self.assert_integer_object(exp_value, evaluated)
+
+    def test_closures(self):
+        s = """
+            let new_adder = fn(x){
+                fn(y){
+                    x + y;
+                }
+            }
+            let add_two = new_adder(2);
+            add_two(2);
+        """
+
+        evaluated = self.eval(s)
+        self.assert_integer_object(4, evaluated)
 
     def eval(self, input_str):
         l = Lexer(input_str)
